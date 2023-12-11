@@ -22,7 +22,6 @@ public class JWTService {
     private String SECRET;
 
     private Key getSigningKey() {
-        System.out.println(SECRET);
         byte[] keyBytes = Decoders.BASE64.decode(SECRET);
         return Keys.hmacShaKeyFor(keyBytes);
     }
@@ -58,7 +57,7 @@ public class JWTService {
                 .compact();
     }
 
-    public String generateTokenWithoutExtraClaims(
+    public String generateToken(
             UserDetails userDetails) {
 
         return Jwts

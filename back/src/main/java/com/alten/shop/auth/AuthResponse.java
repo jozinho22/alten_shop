@@ -1,8 +1,13 @@
 package com.alten.shop.auth;
 
+import org.springframework.http.HttpStatus;
+
 public class AuthResponse {
 
     private String token;
+
+    private HttpStatus httpStatus;
+
     private String message;
 
     public String getToken() {
@@ -13,6 +18,14 @@ public class AuthResponse {
         this.token = token;
     }
 
+    public HttpStatus getHttpStatus() {
+        return httpStatus;
+    }
+
+    public void setHttpStatus(HttpStatus httpStatus) {
+        this.httpStatus = httpStatus;
+    }
+
     public String getMessage() {
         return message;
     }
@@ -21,14 +34,12 @@ public class AuthResponse {
         this.message = message;
     }
 
-    public AuthResponse(String token) {
-        this.token = token;
+    public AuthResponse() {
     }
 
-    public AuthResponse(String token, String message) {
+    public AuthResponse(String token, HttpStatus httpStatus, String message) {
         this.token = token;
+        this.httpStatus = httpStatus;
         this.message = message;
     }
-
-
 }

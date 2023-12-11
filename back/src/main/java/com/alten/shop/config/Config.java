@@ -1,6 +1,7 @@
 package com.alten.shop.config;
 
-import com.alten.shop.repository.security.UserRepository;
+import com.alten.shop.ShopApplication;
+import com.alten.shop.repository.security.AuthorizedUserRepository;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,9 +18,9 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class Config {
 
-    private UserRepository uRepo;
+    private AuthorizedUserRepository uRepo;
 
-    public Config(UserRepository uRepo) {
+    public Config(AuthorizedUserRepository uRepo) {
         this.uRepo = uRepo;
     }
 

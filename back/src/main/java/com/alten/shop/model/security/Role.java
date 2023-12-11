@@ -1,5 +1,5 @@
 package com.alten.shop.model.security;
 
-public enum Authority {
+public enum Role {
     USER, ADMIN
 }

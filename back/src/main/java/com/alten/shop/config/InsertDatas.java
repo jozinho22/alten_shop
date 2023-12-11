@@ -1,10 +1,10 @@
 package com.alten.shop.config;
 
 import com.alten.shop.model.Product;
-import com.alten.shop.model.security.Authority;
+import com.alten.shop.model.security.Role;
 import com.alten.shop.model.security.AuthorizedUser;
 import com.alten.shop.repository.ProductRepository;
-import com.alten.shop.repository.security.UserRepository;
+import com.alten.shop.repository.security.AuthorizedUserRepository;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +24,7 @@ import java.util.List;
 public class InsertDatas {
 
     @Autowired
-    private UserRepository uRepo;
+    private AuthorizedUserRepository uRepo;
     @Autowired
     private ProductRepository prodRepo;
 
@@ -39,7 +39,7 @@ public class InsertDatas {
 
         System.out.println("Inserting the datas :");
 
-        AuthorizedUser admin = new AuthorizedUser("joss@gmail.com", passwordEncoder.encode("joss"), List.of(Authority.ADMIN));
+        AuthorizedUser admin = new AuthorizedUser("joss@gmail.com", passwordEncoder.encode("joss"), List.of(Role.ADMIN));
         uRepo.save(admin);
 
         File sampleFile = sample.getFile();

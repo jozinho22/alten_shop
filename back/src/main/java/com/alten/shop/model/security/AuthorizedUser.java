@@ -22,12 +22,12 @@ public class AuthorizedUser implements UserDetails {
     private String email;
     private String password;
     @Enumerated(EnumType.STRING)
-    private Collection<Authority> authorities;
+    private Collection<Role> roles;
 
-    public AuthorizedUser(String email, String password, Collection<Authority> authorities) {
+    public AuthorizedUser(String email, String password, Collection<Role> roles) {
         this.email = email;
         this.password = password;
-        this.authorities = authorities;
+        this.roles = roles;
     }
     public AuthorizedUser() {
     }
@@ -35,8 +35,8 @@ public class AuthorizedUser implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<SimpleGrantedAuthority> grantedAuthorities = new ArrayList<>();
-        for(Authority auth : authorities) {
-            grantedAuthorities.add(new SimpleGrantedAuthority(auth.name()));
+        for(Role role : roles) {
+            grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
         }
         return grantedAuthorities;
     }
@@ -92,8 +92,8 @@ public class AuthorizedUser implements UserDetails {
         this.password = password;
     }
 
-    public void setAuthorities(Collection<Authority> authorities) {
-        this.authorities = authorities;
+    public void setRoles(Collection<Role> roles) {
+        this.roles = roles;
     }
 
     @Override
@@ -101,11 +101,11 @@ public class AuthorizedUser implements UserDetails {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AuthorizedUser that = (AuthorizedUser) o;
-        return Objects.equals(getId(), that.getId()) && Objects.equals(getEmail(), that.getEmail()) && Objects.equals(getPassword(), that.getPassword()) && authorities == that.authorities;
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getEmail(), that.getEmail()) && Objects.equals(getPassword(), that.getPassword()) && roles == that.roles;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getEmail(), getPassword(), authorities);
+        return Objects.hash(getId(), getEmail(), getPassword(), roles);
     }
 }

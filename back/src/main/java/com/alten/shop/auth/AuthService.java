@@ -1,14 +1,13 @@
 package com.alten.shop.auth;
 
-import com.alten.shop.model.security.Authority;
+import com.alten.shop.model.security.Role;
 import com.alten.shop.model.security.AuthorizedUser;
-import com.alten.shop.repository.security.UserRepository;
+import com.alten.shop.repository.security.AuthorizedUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,13 +18,13 @@ import java.util.*;
 @Service
 public class AuthService {
 
-    private final UserRepository uRepo;
+    private final AuthorizedUserRepository uRepo;
     private final PasswordEncoder passwordEncoder;
     private final JWTService JWTService;
     private AuthenticationManager authManager;
 
     @Autowired
-    public AuthService(UserRepository uRepo,
+    public AuthService(AuthorizedUserRepository uRepo,
                        PasswordEncoder passwordEncoder,
                        JWTService JWTService,
                        AuthenticationManager authManager) {
@@ -35,33 +34,29 @@ public class AuthService {
         this.authManager = authManager;
     }
 
-    public ResponseEntity register(AuthRequest req) {
+    public AuthResponse register(AuthRequest req) {
 
         if(uRepo.findByEmail(req.getEmail()).isPresent()) {
-            return ResponseEntity.
-                    status(409).
-                    body(new AuthResponse(null, "This mail is already taken"));
+            return new AuthResponse(null, HttpStatus.valueOf(409), "This mail is already taken");
         }
 
         var user = new AuthorizedUser(
                 req.getEmail(),
                 passwordEncoder.encode(req.getPassword()),
-                List.of(Authority.USER));
+                List.of(Role.USER));
 
         uRepo.save(user);
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("authorities", user.getAuthorities());
+        claims.put("roles", user.getAuthorities());
 
         var jwtToken = JWTService.generateToken(claims, user);
         System.out.println(jwtToken);
         
-        return ResponseEntity
-                .status(200)
-                .body(new AuthResponse(jwtToken, "Your token is valid for 24h"));
+        return new AuthResponse(jwtToken, HttpStatus.OK, "Your token is valid for 24h");
     }
 
-    public ResponseEntity authenticate(AuthRequest req) {
+    public AuthResponse authenticate(AuthRequest req) {
         authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         req.getEmail(),
@@ -70,19 +65,16 @@ public class AuthService {
         );
         var user = uRepo.findByEmail(req.getEmail());
         if(user.isEmpty()) {
-            return ResponseEntity.
-                    status(404).
-                    body(new AuthResponse(null, "This user does not exist"));
+            return new AuthResponse(null, HttpStatus.valueOf(404), "This user does not exist");
         }
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("authorities", user.get().getAuthorities());
+        claims.put("roles", user.get().getAuthorities());
 
         var jwtToken = JWTService.generateToken(claims, user.get());
         System.out.println(jwtToken);
-        return ResponseEntity
-                .status(200)
-                .body(new AuthResponse(jwtToken, "Your token is valid for 24h"));
+
+        return new AuthResponse(jwtToken, HttpStatus.OK, "Your token is valid for 24h");
     }
 
 
