@@ -5,7 +5,10 @@ import com.alten.shop.auth.AuthService;
 import com.alten.shop.model.security.Role;
 import com.alten.shop.repository.ProductRepository;
 import com.alten.shop.repository.security.AuthorizedUserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -14,6 +17,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
@@ -26,18 +30,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.JsonParser;
 ;
 
 public class StepDefinitions {
 
-    private String jwtToken;
+    private String adminJwtToken;
+    private String userJwtToken;
 
     private static final String authURL = "http://localhost:8080/auth/authenticate";
     private static final String registerURL = "http://localhost:8080/auth/register";
+    private static final String productsURL = "http://localhost:8080/api/products";
 
     @Autowired
     private AuthorizedUserRepository uRepo;
@@ -46,7 +54,7 @@ public class StepDefinitions {
     @Autowired
     private ProductRepository pRepo;
 
-    private HttpUriRequest createRequest(String URL, AuthRequest authRequest, String jwtToken) throws URISyntaxException {
+    private HttpUriRequest createPostRequest(String URL, AuthRequest authRequest, String jwtToken) throws URISyntaxException, IOException {
         HttpPost httpPost = new HttpPost(URL);
 
         URI uri = new URIBuilder(httpPost.getURI())
@@ -57,24 +65,36 @@ public class StepDefinitions {
 
         HttpUriRequest request = httpPost;
         request.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-        if(jwtToken != null) {
-            request.setHeader(HttpHeaders.AUTHORIZATION, jwtToken);
-        }
+        prepareBearerToken(jwtToken, request);
         return request;
     }
 
-    @Given("I authenticate as ADMIN with the tuple : \\{email : {string}, password : {string}\\}")
-    public void authenticate(String email, String password) throws URISyntaxException, IOException {
+    private static void prepareBearerToken(String jwtToken, HttpUriRequest request) throws IOException {
+        if(jwtToken != null) {
+            JsonNode rootNode = new ObjectMapper().readTree(new StringReader(jwtToken));
+            String tokenValue = String.valueOf(rootNode.get("token"));
+            tokenValue = tokenValue.replace("\"", "");
+            request.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + tokenValue);
+        }
+    }
+
+    @Given("I authenticate as ADMIN")
+    public void authenticate(DataTable dt) throws URISyntaxException, IOException {
+
+        List<List<String>> rows = dt.asLists(String.class);
+        String email = rows.get(0).get(0);
+        String password = rows.get(0).get(1);
+
         AuthRequest authRequest = new AuthRequest(email, password);
 
-        HttpUriRequest request = createRequest(authURL, authRequest, null);
-        HttpResponse httpResponse = HttpClientBuilder.create().build().execute( request );
+        HttpUriRequest request = createPostRequest(authURL, authRequest, null);
+        HttpResponse httpResponse = HttpClientBuilder.create().build().execute(request);
         Assert.assertTrue(httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
 
-        jwtToken = EntityUtils.toString(httpResponse.getEntity());
-        Assert.assertTrue(jwtToken != null);
+        adminJwtToken = EntityUtils.toString(httpResponse.getEntity());
+        Assert.assertTrue(adminJwtToken != null);
 
-        Map<String, Object> decodedToken = decodeJWT(jwtToken);
+        Map<String, Object> decodedToken = decodeJWT(adminJwtToken);
         Assert.assertTrue(decodedToken.get("sub").equals(email));
 
         Object roles = decodedToken.get("roles");
@@ -92,21 +112,84 @@ public class StepDefinitions {
         return mapping;
     }
 
+    @When("I want to register a new AuthorizedUser, who will have a USER Role")
+    public void register(DataTable dt) throws URISyntaxException, IOException {
 
-    @When("I want to register a new AuthorizedUser who will have a USER Role")
-    public void register() {
-        Assert.assertTrue(1 ==1);
+        List<List<String>> rows = dt.asLists(String.class);
+        String email = rows.get(0).get(0);
+        String password = rows.get(0).get(1);
+        AuthRequest authRequest = new AuthRequest(email, password);
+
+        HttpUriRequest request = createPostRequest(registerURL, authRequest, adminJwtToken);
+        HttpResponse httpResponse = HttpClientBuilder.create().build().execute(request);
+        Assert.assertTrue(httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
+
+        userJwtToken = EntityUtils.toString(httpResponse.getEntity());
     }
 
 
-    @Then("Then I retrieve a USER token")
-    public void getUserToken() {
-        Assert.assertTrue(1 ==1);
+    @Then("I retrieve a USER token")
+    public void retrieveUserToken() throws IOException {
+
+        Assert.assertTrue(userJwtToken != null);
+
+        Map<String, Object> decodedToken = decodeJWT(userJwtToken);
+
+        Object roles = decodedToken.get("roles");
+        List<LinkedHashMap<String, Object>> rolesCasted = (List<LinkedHashMap<String, Object>>) roles;
+        Assert.assertTrue(rolesCasted.size() == 1);
+
+        Assert.assertTrue(rolesCasted.get(0).get("authority").equals("ROLE_" + Role.USER.name()));
+
     }
 
-    @Then("my new User has the USER role, and can access to the products list")
-    public void userHasUserRole() {
-        Assert.assertTrue(1 ==1);
+    private HttpUriRequest createGetRequest(String URL, String jwtToken) throws URISyntaxException, IOException {
+
+        HttpGet httpGet = new HttpGet(URL);
+
+        URI uri = new URIBuilder(httpGet.getURI())
+                .build();
+
+        httpGet.setURI(uri);
+
+        HttpUriRequest request = httpGet;
+        request.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+
+        prepareBearerToken(jwtToken, request);
+
+        return request;
+    }
+
+    @Then("my new AuthorizedUser can access to the products list with USER token")
+    public void canAccessToProducts() throws URISyntaxException, IOException {
+        HttpUriRequest request = createGetRequest(productsURL, userJwtToken);
+        HttpResponse httpResponse = HttpClientBuilder.create().build().execute(request);
+
+        Assert.assertTrue(httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+    }
+
+    @Then("my new AuthorizedUser can not access to the products list without USER token")
+    public void cannotAccessToProducts() throws URISyntaxException, IOException {
+        HttpUriRequest request = createGetRequest(productsURL, null);
+        HttpResponse httpResponse = HttpClientBuilder.create().build().execute(request);
+
+        Assert.assertTrue(httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED);
+
+    }
+
+    @Then("my new AuthorizedUser can not access to the register API with USER token")
+    public void cannotAccessToRegister(DataTable dt) throws URISyntaxException, IOException {
+
+        List<List<String>> rows = dt.asLists(String.class);
+        String email = rows.get(0).get(0);
+        String password = rows.get(0).get(1);
+
+        AuthRequest authRequest = new AuthRequest(email, password);
+
+        HttpUriRequest request = createPostRequest(registerURL, authRequest, userJwtToken);
+        HttpResponse httpResponse = HttpClientBuilder.create().build().execute(request);
+        Assert.assertTrue(httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED);
+
     }
 
 }

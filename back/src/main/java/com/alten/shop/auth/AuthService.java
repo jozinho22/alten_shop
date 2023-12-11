@@ -53,7 +53,7 @@ public class AuthService {
         var jwtToken = JWTService.generateToken(claims, user);
         System.out.println(jwtToken);
         
-        return new AuthResponse(jwtToken, HttpStatus.OK, "Your token is valid for 24h");
+        return new AuthResponse(jwtToken, HttpStatus.CREATED, "Your token is valid for 24h");
     }
 
     public AuthResponse authenticate(AuthRequest req) {

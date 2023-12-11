@@ -12,7 +12,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 @RunWith(Cucumber.class)
 @CucumberContextConfiguration
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @CucumberOptions(
 		monochrome = true,
 		features = { "classpath:features/products.feature" },

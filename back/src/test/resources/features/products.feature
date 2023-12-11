@@ -2,13 +2,14 @@
 
 Feature: Test differents authorizations
 
-    Scenario: Get an ADMIN and register a new User
+    Scenario Outline: Authenticate as ADMIN and register a new User
 
-          Given I authenticate as ADMIN with the tuple : {email : "<email>", password : "<password>"}
-          When I want to register a new AuthorizedUser who will have a USER Role
+          Given I authenticate as ADMIN
+          | joss@gmail.com   | joss   |
+          When I want to register a new AuthorizedUser, who will have a USER Role
+          | user@gmail.com   | pwd   |
           Then I retrieve a USER token
-          Then my new User has the USER role, and can access to the products list
-
-          Examples:
-               | email              | password      |
-               | joss@gmail.com     | joss          |
+          Then my new AuthorizedUser can access to the products list with USER token
+          Then my new AuthorizedUser can not access to the products list without USER token
+          Then my new AuthorizedUser can not access to the register API with USER token
+          | user2@gmail.com   | pwd2   |
