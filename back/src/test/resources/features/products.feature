@@ -2,7 +2,7 @@
 
 Feature: Test differents authorizations
 
-    Scenario Outline: Authenticate as ADMIN and register a new User
+    Scenario Outline: Authenticate as ADMIN and then register a new AuthorizedUser
 
           Given I authenticate as ADMIN
           | joss@gmail.com   | joss   |

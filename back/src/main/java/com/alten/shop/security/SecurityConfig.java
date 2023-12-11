@@ -1,4 +1,4 @@
-package com.alten.shop.config;
+package com.alten.shop.security;
 
 import com.alten.shop.model.security.Role;
 import com.alten.shop.repository.security.AuthorizedUserRepository;

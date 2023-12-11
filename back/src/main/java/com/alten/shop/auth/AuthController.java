@@ -24,7 +24,7 @@ public class AuthController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest req, Errors errors) {
         if (errors.hasErrors()) {
-            return new ResponseEntity("Check if your email is valid (....@...)", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity(errors.getAllErrors(), HttpStatus.BAD_REQUEST);
         }
         AuthResponse authResponse = authService.register(req);
         return ResponseEntity
@@ -35,7 +35,7 @@ public class AuthController {
     @PostMapping("/authenticate")
     public ResponseEntity<AuthResponse> auth(@Valid @RequestBody AuthRequest req, Errors errors) {
         if (errors.hasErrors()) {
-            return new ResponseEntity("Check if your email is valid (....@...)", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity(errors.getAllErrors(), HttpStatus.BAD_REQUEST);
         }
 
         AuthResponse authResponse = authService.authenticate(req);

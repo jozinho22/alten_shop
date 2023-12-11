@@ -13,6 +13,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import jakarta.validation.Valid;
@@ -55,7 +56,10 @@ public class ProductController {
 
     @PostMapping("")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<String> create(@Valid @RequestBody Product p) {
+    public ResponseEntity<String> create(@Valid @RequestBody Product p, Errors errors) {
+        if (errors.hasErrors()) {
+            return new ResponseEntity(errors.getAllErrors(), HttpStatus.BAD_REQUEST);
+        }
         prodRepo.save(p);
 
         return ResponseEntity.ok("Le produit n°" + p.getId() + " a bien été créé");
@@ -82,7 +86,10 @@ public class ProductController {
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Product> patch(@PathVariable Long id, @Valid @RequestBody Product pDetails) {
+    public ResponseEntity<Product> patch(@PathVariable Long id, @Valid @RequestBody Product pDetails, Errors errors) {
+        if (errors.hasErrors()) {
+            return new ResponseEntity(errors.getAllErrors(), HttpStatus.BAD_REQUEST);
+        }
 
         Product p = prodRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found for the id : " + id));
