@@ -63,7 +63,7 @@ public class ProductController {
 
 
     // insert datas
-    @PostMapping("/sample")
+    /*@PostMapping("/sample")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<String> createDatas() throws IOException {
 
@@ -78,7 +78,7 @@ public class ProductController {
         prodRepo.saveAll(products);
 
         return ResponseEntity.ok("Les " + products.size() + " produits ont bien été créés");
-    }
+    }*/
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

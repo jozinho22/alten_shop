@@ -24,17 +24,14 @@ public class Product implements Serializable {
     @NotNull
     private Integer quantity;
     @NotNull
-    private String inventoryStatus;
+    @Enumerated(EnumType.STRING)
+    private InventoryStatus inventoryStatus;
     @NotNull
     private String category;
     @Nullable
     private String image;
     @Nullable
     private Float rating;
-
-/*    @Transient
-    @JsonIgnore
-    private JsonNode data;*/
 
     public Long getId() {
         return id;
@@ -84,11 +81,11 @@ public class Product implements Serializable {
         this.quantity = quantity;
     }
 
-    public String getInventoryStatus() {
+    public InventoryStatus getInventoryStatus() {
         return inventoryStatus;
     }
 
-    public void setInventoryStatus(String inventoryStatus) {
+    public void setInventoryStatus(InventoryStatus inventoryStatus) {
         this.inventoryStatus = inventoryStatus;
     }
 
